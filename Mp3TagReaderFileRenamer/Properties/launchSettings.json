@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Mp3TagReaderFileRenamer": {
+      "commandName": "Project",
+      "commandLineArgs": "\"F:\\recordify\\Folge 3 Leo Lausemaus - Kopie\""
+    }
+  }
+}
