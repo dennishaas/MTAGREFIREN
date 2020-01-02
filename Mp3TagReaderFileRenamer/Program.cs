@@ -1,24 +1,36 @@
 ﻿using System;
 using System.IO;
-
+[assembly: log4net.Config.XmlConfigurator(ConfigFile = "log4net.config", Watch = true)]
 namespace Mp3TagReaderFileRenamer
 {
+  
     class Program
     {
+
+        private static readonly log4net.ILog _log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         static void Main(string[] args)
         {
+            
             string folderName = args[0];
             if (args[0] == null || args[0].Equals("-?"))
             {
-                Console.WriteLine("Mp3TagReaderFileRenamer  [folderName]");
+                _log.Info("Mp3TagReaderFileRenamer  [folderName]");
             }
             string[] filePaths = Directory.GetFiles(folderName);
             foreach (string file in filePaths)
             {
                 uint trackno = ReadMp3Tags(file);
-                String newPath = AddTracknumber(trackno, file);
-                Console.WriteLine(newPath);
-                File.Copy(file, newPath);
+                _log.InfoFormat("The old Filename is: {0}",
+                    file);
+                String newPath = AddTracknumberToFileName(trackno, file);
+                _log.InfoFormat("The new Filename is : {0}",newPath);
+                if (!File.Exists(newPath)){
+                    File.Copy(file, newPath);
+                    _log.Info("File was copied");
+                } else{
+                    _log.InfoFormat("File {0} already exists",newPath);
+
+                }
             }
 
 
@@ -26,41 +38,57 @@ namespace Mp3TagReaderFileRenamer
 
         }
 
-        private static String AddTracknumber(uint trackno, string file)
+        private static String AddTracknumberToFileName(uint trackno, string file)
         {
             if (System.IO.File.Exists(file))
             {
                 DirectoryInfo DI_Data = new DirectoryInfo(file);
                 int numberOfParts = DI_Data.NumberOfParts();
                 string filename = DI_Data.DirectoryPart(numberOfParts - 1);
-                string tracknoprefix = trackno / 10 == 0 ? "0" + trackno : "" + trackno;
-                filename = tracknoprefix + " - " + filename;
-                Console.WriteLine("???" + filename);
-                string newPath = "";
-                for (int i = DI_Data.NumberOfParts()-1 ; i > 0; i--)
+                string tracknoprefix = GetTrackNoPrefixIncludingLeadingZero(trackno);
+                if (!filename.StartsWith(tracknoprefix))
                 {
-                    string suffix = DI_Data.Parts()[i];
-                    Console.WriteLine(suffix);
-                    if (DI_Data.NumberOfParts()- 1 == i)
-                    {
-                        newPath = newPath + suffix;
-                    }
-                    else
-                    {
-                        newPath = newPath + @"\" + suffix;
-                    }                
-                    Console.WriteLine("New Path" +newPath);
+                    filename = tracknoprefix + " - " + filename;
                 }
-                newPath = newPath + @"\" +filename;
-                newPath.Replace("\\\\", "\\");
-                Console.WriteLine("---" + file);
-                Console.WriteLine("***" + newPath);
-                return newPath;
+                string currentNewPath = SpecifyPath(DI_Data);
+                currentNewPath = AddFileName(filename, currentNewPath);               
+                return currentNewPath;
             }
             return "";
         }
 
+        private static string SpecifyPath(DirectoryInfo DI_Data)
+        {
+            string currentNewPath = "";
+            for (int i = DI_Data.NumberOfParts() - 1; i > 0; i--)
+            {
+                string currentSuffix = DI_Data.Parts()[i];
+                _log.DebugFormat("CurrentSuffix: {0}", currentSuffix);
+                if (DI_Data.NumberOfParts() - 1 == i)
+                {
+                    currentNewPath = currentNewPath + currentSuffix;
+                }
+                else
+                {
+                    currentNewPath = currentNewPath + @"\" + currentSuffix;
+                }
+                _log.DebugFormat("New Path: {0}", currentNewPath);
+            }
 
+            return currentNewPath;
+        }
+
+        private static string AddFileName(string filename, string currentNewPath)
+        {
+            currentNewPath = currentNewPath + @"\" + filename;
+            currentNewPath.Replace("\\\\", "\\");
+            return currentNewPath;
+        }
+
+        private static string GetTrackNoPrefixIncludingLeadingZero(uint trackno)
+        {
+            return trackno / 10 == 0 ? "0" + trackno : "" + trackno;
+        }
 
         private static uint ReadMp3Tags(string filename)
         {
