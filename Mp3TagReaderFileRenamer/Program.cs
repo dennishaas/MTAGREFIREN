@@ -4,11 +4,11 @@ using System.IO;
 namespace Mp3TagReaderFileRenamer
 {
   
-    class Program
+    public class Program
     {
 
         private static readonly log4net.ILog _log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             
             string folderName = args[0];
@@ -38,7 +38,7 @@ namespace Mp3TagReaderFileRenamer
 
         }
 
-        private static String AddTracknumberToFileName(uint trackno, string file)
+        protected static String AddTracknumberToFileName(uint trackno, string file)
         {
             if (System.IO.File.Exists(file))
             {
@@ -57,7 +57,7 @@ namespace Mp3TagReaderFileRenamer
             return "";
         }
 
-        private static string SpecifyPath(DirectoryInfo DI_Data)
+        protected static string SpecifyPath(DirectoryInfo DI_Data)
         {
             string currentNewPath = "";
             for (int i = DI_Data.NumberOfParts() - 1; i > 0; i--)
@@ -78,19 +78,19 @@ namespace Mp3TagReaderFileRenamer
             return currentNewPath;
         }
 
-        private static string AddFileName(string filename, string currentNewPath)
+        protected static string AddFileName(string filename, string currentNewPath)
         {
             currentNewPath = currentNewPath + @"\" + filename;
             currentNewPath.Replace("\\\\", "\\");
             return currentNewPath;
         }
 
-        private static string GetTrackNoPrefixIncludingLeadingZero(uint trackno)
+        public static string GetTrackNoPrefixIncludingLeadingZero(uint trackno)
         {
             return trackno / 10 == 0 ? "0" + trackno : "" + trackno;
         }
 
-        private static uint ReadMp3Tags(string filename)
+        protected static uint ReadMp3Tags(string filename)
         {
             TagLib.File file = TagLib.File.Create(filename);
             uint trackno = file.Tag.Track;
